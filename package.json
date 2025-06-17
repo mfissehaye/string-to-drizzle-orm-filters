@@ -13,6 +13,10 @@
     "test:watch": "vitest --watch",
     "prepublishOnly": "npm run build && npm test"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mfissehaye/string-to-drizzle-orm-filters.git"
+  },
   "keywords": [
     "drizzle-orm",
     "filters",
