@@ -1,0 +1,41 @@
+{
+  "name": "@mfissehaye/string-to-drizzle-orm-filters",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist",
+    "prebuild": "npm run clean",
+    "test": "vitest run",
+    "test:watch": "vitest --watch",
+    "prepublishOnly": "npm run build && npm test"
+  },
+  "keywords": [
+    "drizzle-orm",
+    "filters",
+    "string-to-filters",
+    "typescript",
+    "orm",
+    "database",
+    "query",
+    "query-builder",
+    "sql",
+    "query-language",
+    "query-translation",
+    "query-parser",
+    "query-conversion"
+  ],
+  "author": "Merhawi Fissehaye",
+  "license": "MIT",
+  "dependencies": {
+    "drizzle-orm": "^0.44.2"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.3",
+    "typescript": "^5.8.3",
+    "vitest": "^1.0.0"
+  }
+}
