@@ -84,16 +84,16 @@ describe('Lexer', () => {
         expect(lexer.nextToken()).toEqual({ type: TokenType.EOF, value: '', position: 5 });
     })
 
-    it('should return UNKNOWN token for unsupported characters', () => {
-        const input = 'eq(123)';
-        const lexer = new Lexer(input);
+    // it('should return UNKNOWN token for unsupported characters', () => {
+    //     const input = 'eq(123)';
+    //     const lexer = new Lexer(input);
 
-        lexer.nextToken(); // eq
-        lexer.nextToken(); // (
-        expect(lexer.nextToken()).toEqual({ type: TokenType.Unknown, value: '1', position: 3 })
-        expect(lexer.nextToken()).toEqual({ type: TokenType.Unknown, value: '2', position: 4 })
-        expect(lexer.nextToken()).toEqual({ type: TokenType.Unknown, value: '3', position: 5 })
-    })
+    //     lexer.nextToken(); // eq
+    //     lexer.nextToken(); // (
+    //     expect(lexer.nextToken()).toEqual({ type: TokenType.Unknown, value: '1', position: 3 })
+    //     expect(lexer.nextToken()).toEqual({ type: TokenType.Unknown, value: '2', position: 4 })
+    //     expect(lexer.nextToken()).toEqual({ type: TokenType.Unknown, value: '3', position: 5 })
+    // })
 
     it('should correctly tokenize expression with numbers as part of identifiers or arguments if allowed', () => {
         const input = 'gt("user123", "value42")';
@@ -117,4 +117,17 @@ describe('Lexer', () => {
         lexer.reset();
         expect(lexer.nextToken()).toEqual({ type: TokenType.Identifier, value: 'eq', position: 0 })
     })
+
+    it('should correctly tokenize integer numbers', () => {
+        const input = 'eq("age", 30)';
+        const lexer = new Lexer(input);
+
+        expect(lexer.nextToken()).toEqual({ type: TokenType.Identifier, value: 'eq', position: 0 });
+        expect(lexer.nextToken()).toEqual({ type: TokenType.LParen, value: '(', position: 2 });
+        expect(lexer.nextToken()).toEqual({ type: TokenType.StringLiteral, value: 'age', position: 3 });
+        expect(lexer.nextToken()).toEqual({ type: TokenType.Comma, value: ',', position: 8 });
+        expect(lexer.nextToken()).toEqual({ type: TokenType.NumberLiteral, value: '30', position: 10 });
+        expect(lexer.nextToken()).toEqual({ type: TokenType.RParen, value: ')', position: 12 });
+        expect(lexer.nextToken()).toEqual({ type: TokenType.EOF, value: '', position: 13 });
+    });
 })

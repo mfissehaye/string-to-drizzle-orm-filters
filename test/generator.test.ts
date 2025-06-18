@@ -1,21 +1,21 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { SQL, eq, and, or, like, ilike, gt, gte, lt, lte, isNull, isNotNull, not } from 'drizzle-orm'
+import { SQL } from 'drizzle-orm'
 import { AnyColumn } from "drizzle-orm";
 import { FilterGenerator, ColumnMap } from '../src/generator'
-import { Program, CallExpression, StringLiteral } from "../src/ast";
+import { Program } from "../src/ast";
 import { ParserError } from "../src/parser";
 
 const { mockAnd, mockEq, mockOr, mockLike, mockIlike, mockGt, mockGte, mockLt, mockLte, mockIsNull, mockIsNotNull, mockNot } = vi.hoisted(() => {
     // Mock Drizzle ORM function for testing
-    const mockEq = vi.fn((col: AnyColumn | string, val: string) => `eq(${typeof col === 'object' ? (col as any).__name : col}, "${val}")`);
+    const mockEq = vi.fn((col: AnyColumn | string, val: string | number) => `eq(${typeof col === 'object' ? (col as any).__name : col}, ${JSON.stringify(val)})`);
     const mockAnd = vi.fn((...args: any[]) => `and(${args.join(', ')})`);
     const mockOr = vi.fn((...args: any[]) => `or(${args.join(', ')})`);
-    const mockLike = vi.fn((col: AnyColumn | string, val: string) => `like(${typeof col === 'object' ? (col as any).__name : col}, "${val}")`);
-    const mockIlike = vi.fn((col: AnyColumn | string, val: string) => `ilike(${typeof col === 'object' ? (col as any).__name : col}, "${val}")`);
-    const mockGt = vi.fn((col: AnyColumn | string, val: string) => `gt(${typeof col === 'object' ? (col as any).__name : col}, "${val}")`);
-    const mockGte = vi.fn((col: AnyColumn | string, val: string) => `gte(${typeof col === 'object' ? (col as any).__name : col}, "${val}")`);
-    const mockLt = vi.fn((col: AnyColumn | string, val: string) => `lt(${typeof col === 'object' ? (col as any).__name : col}, "${val}")`);
-    const mockLte = vi.fn((col: AnyColumn | string, val: string) => `lte(${typeof col === 'object' ? (col as any).__name : col}, "${val}")`);
+    const mockLike = vi.fn((col: AnyColumn | string, val: string) => `like(${typeof col === 'object' ? (col as any).__name : col}, ${JSON.stringify(val)})`);
+    const mockIlike = vi.fn((col: AnyColumn | string, val: string) => `ilike(${typeof col === 'object' ? (col as any).__name : col}, ${JSON.stringify(val)})`);
+    const mockGt = vi.fn((col: AnyColumn | string, val: string | number) => `gt(${typeof col === 'object' ? (col as any).__name : col}, ${JSON.stringify(val)})`);
+    const mockGte = vi.fn((col: AnyColumn | string, val: string | number) => `gte(${typeof col === 'object' ? (col as any).__name : col}, ${JSON.stringify(val)})`);
+    const mockLt = vi.fn((col: AnyColumn | string, val: string | number) => `lt(${typeof col === 'object' ? (col as any).__name : col}, ${JSON.stringify(val)})`);
+    const mockLte = vi.fn((col: AnyColumn | string, val: string | number) => `lte(${typeof col === 'object' ? (col as any).__name : col}, ${JSON.stringify(val)})`);
     const mockIsNull = vi.fn((col: AnyColumn | string) => `isNull(${typeof col === 'object' ? (col as any).__name : col})`);
     const mockIsNotNull = vi.fn((col: AnyColumn | string) => `isNotNull(${typeof col === 'object' ? (col as any).__name : col})`);
     const mockNot = vi.fn((filter: SQL) => `not(${filter})`);
@@ -28,6 +28,7 @@ const mockUsersTable = {
     id: { __name: 'users.id' } as unknown as AnyColumn,
     name: { __name: 'users.name' } as unknown as AnyColumn,
     age: { __name: 'users.age' } as unknown as AnyColumn,
+    price: { __name: 'users.price' } as unknown as AnyColumn,
     email: { __name: 'users.email' } as unknown as AnyColumn,
 };
 
@@ -36,6 +37,7 @@ const mockColumnMap: ColumnMap = {
     name: mockUsersTable.name,
     age: mockUsersTable.age,
     email: mockUsersTable.email,
+    price: mockUsersTable.price,
     // For the example input:
     a: { __name: 'mock_table.a' } as unknown as AnyColumn,
     c: { __name: 'mock_table.c' } as unknown as AnyColumn,
@@ -185,10 +187,10 @@ describe('FilterGenerator', () => {
         const result = generator.generate(ast);
 
         // Verify individual calls
-        expect(mockEq).toHaveBeenCalledWith(mockColumnMap.a, 'b');
-        expect(mockLike).toHaveBeenCalledWith(mockColumnMap.c, 'd');
-        expect(mockGt).toHaveBeenCalledWith(mockColumnMap.e, 'f');
-        expect(mockIlike).toHaveBeenCalledWith(mockColumnMap.g, 'h');
+        expect(mockEq).toHaveBeenCalledWith(mockColumnMap['a'], 'b');
+        expect(mockLike).toHaveBeenCalledWith(mockColumnMap['c'], 'd');
+        expect(mockGt).toHaveBeenCalledWith(mockColumnMap['e'], 'f');
+        expect(mockIlike).toHaveBeenCalledWith(mockColumnMap['g'], 'h');
 
         // Verify nested logical calls
         expect(mockOr).toHaveBeenCalledWith('eq(mock_table.a, "b")', 'like(mock_table.c, "d")');
@@ -297,5 +299,45 @@ describe('FilterGenerator', () => {
         const generator = new FilterGenerator(mockColumnMap);
         const result = generator.generate(emptyAst);
         expect(result).toBeUndefined(); // Or throw, based on desired behavior for malformed AST
+    });
+
+    it('should generate an eq filter with an integer number literal', () => {
+        const ast: Program = {
+            kind: 'Program',
+            expression: {
+                kind: 'CallExpression',
+                functionName: 'eq',
+                args: [
+                    { kind: 'StringLiteral', value: 'age' },
+                    { kind: 'NumberLiteral', value: 30 },
+                ],
+            },
+        };
+
+        const generator = new FilterGenerator(mockColumnMap);
+        const result = generator.generate(ast);
+
+        expect(mockEq).toHaveBeenCalledWith(mockUsersTable.age, 30);
+        expect(result).toBe('eq(users.age, 30)');
+    });
+
+    it('should generate a gt filter with a floating-point number literal', () => {
+        const ast: Program = {
+            kind: 'Program',
+            expression: {
+                kind: 'CallExpression',
+                functionName: 'gt',
+                args: [
+                    { kind: 'StringLiteral', value: 'price' },
+                    { kind: 'NumberLiteral', value: 99.99 },
+                ],
+            },
+        };
+
+        const generator = new FilterGenerator(mockColumnMap);
+        const result = generator.generate(ast);
+
+        expect(mockGt).toHaveBeenCalledWith(mockUsersTable.price, 99.99);
+        expect(result).toBe('gt(users.price, 99.99)');
     });
 });

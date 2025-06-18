@@ -1,6 +1,6 @@
 import { eq, and, or, like, ilike, gt, gte, lt, lte, isNull, isNotNull, not, inArray, between, notBetween } from "drizzle-orm";
 import { AnyColumn } from "drizzle-orm";
-import { Program, CallExpression, StringLiteral, DrizzleFilter, ASTNode } from "./ast";
+import { Program, CallExpression, StringLiteral, DrizzleFilter, ASTNode, NumberLiteral } from "./ast";
 import { ParserError } from "./parser";
 
 /**
@@ -50,19 +50,27 @@ export class FilterGenerator {
      * @param ast The root of the AST (Program node) to convert.
      * @returns A Drizzle ORM SQL expression (or undefined if the AST's expression is null).
      */
-    public generate(ast: Program): DrizzleFilter {
+    public generate(ast: Program): DrizzleFilter | string | number {
         if (!ast.expression) {
             return undefined; // Or throw an error if an empty expression is not allowed.
         }
         return this.traverseNode(ast.expression)
     }
 
-    private traverseNode(node: CallExpression | StringLiteral): DrizzleFilter {
+    private traverseNode(node: CallExpression | StringLiteral | NumberLiteral): DrizzleFilter | string | number {
         switch (node.kind) {
             case 'CallExpression':
                 return this.handleCallExpression(node);
             case 'StringLiteral':
-                throw new ParserError(`Unexpected StringLiteral as a top-level filter ${node.value}`);
+                // A StringLiteral itself is not a Drizzle filter, but it's used as an argument.
+                // If this is called at the top-level, it's a malformed AST for a filter.
+                // When called recursively for arguments, it should return its value.
+                // throw new ParserError(`Unexpected StringLiteral as a top-level filter ${node.value}`);
+                return node.value;
+            // NEW: Handle NumberLiteral
+            case 'NumberLiteral':
+                // A NumberLiteral is also an argument type, not a filter itself.
+                return node.value;
             default:
                 // This should not happen if AST is well-formed
                 throw new ParserError(`Unknown AST node kind: ${(node as ASTNode).kind}`)
@@ -88,6 +96,8 @@ export class FilterGenerator {
                 } else {
                     return arg.value
                 }
+            } else if (arg.kind === 'NumberLiteral') { // NEW: Handle NumberLiteral directly as its numeric value
+                return arg.value;
             } else if (arg.kind === 'CallExpression') {
                 return this.traverseNode(arg)
             }

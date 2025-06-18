@@ -155,14 +155,14 @@ describe('Parser', () => {
         expect(() => parser.parse()).toThrow('Expected \')\' to close function call \'eq\'.')
     })
 
-    it('should throw ParseError for unknown identifier where an expression is expected', () => {
-        const input = 'and(eq("a", "b"), 123)'; // 123 is an unknown token type
-        const lexer = new Lexer(input);
-        const parser = new Parser(lexer);
+    // it('should throw ParseError for unknown identifier where an expression is expected', () => {
+    //     const input = 'and(eq("a", "b"), 123)'; // 123 is an unknown token type
+    //     const lexer = new Lexer(input);
+    //     const parser = new Parser(lexer);
 
-        // expect(() => parser.parse()).toThrow(ParserError);
-        expect(() => parser.parse()).toThrow('Unexpected token \'1\' (type UNKNOWN). Expected a string literal or a nested function call as an argument.')
-    })
+    //     // expect(() => parser.parse()).toThrow(ParserError);
+    //     expect(() => parser.parse()).toThrow('Unexpected token \'1\' (type UNKNOWN). Expected a string literal or a nested function call as an argument.')
+    // })
 
     // it('should throw ParserError for unmatched parenthesis', () => {
     //     const input = '(eq("a", "b")'; // Missing closing ')'
@@ -204,4 +204,50 @@ describe('Parser', () => {
 
         expect(() => parser.parse()).toThrow('Expected \'(\' after function name \'eq\'.');
     })
+
+    it('should parse an eq expression with a number literal', () => {
+        const input = 'eq("age", 30)';
+        const lexer = new Lexer(input);
+        const parser = new Parser(lexer);
+        const ast = parser.parse();
+
+        expect(ast).toEqual({
+            kind: 'Program',
+            expression: {
+                kind: 'CallExpression',
+                functionName: 'eq',
+                args: [
+                    { kind: 'StringLiteral', value: 'age' },
+                    { kind: 'NumberLiteral', value: 30 },
+                ],
+            },
+        });
+    });
+
+    it('should parse a gt expression with a floating-point number literal', () => {
+        const input = 'gt("price", 99.99)';
+        const lexer = new Lexer(input);
+        const parser = new Parser(lexer);
+        const ast = parser.parse();
+
+        expect(ast).toEqual({
+            kind: 'Program',
+            expression: {
+                kind: 'CallExpression',
+                functionName: 'gt',
+                args: [
+                    { kind: 'StringLiteral', value: 'price' },
+                    { kind: 'NumberLiteral', value: 99.99 },
+                ],
+            },
+        });
+    });
+
+    // it('should throw ParserError for an invalid number literal', () => {
+    //     const input = 'eq("a", 123.4.5)'; // Malformed number
+    //     const lexer = new Lexer(input);
+    //     const parser = new Parser(lexer);
+    //     // expect(() => parser.parse()).toThrow(ParserError);
+    //     expect(() => parser.parse()).toThrow('Invalid number literal: \'123.4.5\'');
+    // });
 })

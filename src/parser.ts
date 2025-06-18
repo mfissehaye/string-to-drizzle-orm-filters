@@ -1,4 +1,4 @@
-import { CallExpression, Program, StringLiteral } from "./ast";
+import { CallExpression, NumberLiteral, Program, StringLiteral } from "./ast";
 import { Lexer, Token, TokenType } from "./lexer";
 
 export class ParserError extends Error {
@@ -109,7 +109,7 @@ export class Parser {
             `Expected '(' after function name '${functionNameToken.value}'.`
         )
 
-        const args: (StringLiteral | CallExpression)[] = this.parseArguments();
+        const args: (StringLiteral | NumberLiteral | CallExpression)[] = this.parseArguments();
 
         this.consume(
             TokenType.RParen,
@@ -127,8 +127,8 @@ export class Parser {
      * Parses the arguments within a function call.
      * Arguments can be string literals or nested call expressions.
      */
-    private parseArguments(): (StringLiteral | CallExpression)[] {
-        const args: (StringLiteral | CallExpression)[] = [];
+    private parseArguments(): (StringLiteral | NumberLiteral | CallExpression)[] {
+        const args: (StringLiteral | NumberLiteral | CallExpression)[] = [];
 
         // Check for empty arguments (.e.g., `func()`)
         if (this.match(TokenType.RParen)) {
@@ -147,7 +147,7 @@ export class Parser {
         return args;
     }
 
-    private parseArgument(): StringLiteral | CallExpression {
+    private parseArgument(): StringLiteral | NumberLiteral | CallExpression {
         if (this.match(TokenType.StringLiteral)) {
             const stringToken = this.consume(
                 TokenType.StringLiteral,
@@ -157,6 +157,20 @@ export class Parser {
                 kind: 'StringLiteral',
                 value: stringToken.value,
             }
+        } else if (this.match(TokenType.NumberLiteral)) {
+            const numberToken = this.consume(
+                TokenType.NumberLiteral,
+                `Expected a number literal but got '${this.lookahead?.value}' (type ${this.lookahead?.type}).`,
+            );
+            // Convert the string value to a number
+            const numericValue = parseFloat(numberToken.value);
+            if (isNaN(numericValue)) {
+                throw new ParserError(`Invalid number literal: '${numberToken.value}'`, numberToken);
+            }
+            return {
+                kind: 'NumberLiteral',
+                value: numericValue,
+            };
         } else if (this.match(TokenType.Identifier)) {
             // Allow nested function calls as arguments (e.g., `and(eq(...), or(...))`)
             return this.parseCallExpression();

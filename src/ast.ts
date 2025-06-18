@@ -11,7 +11,7 @@ export interface ASTNode {
 export interface CallExpression extends ASTNode {
     kind: 'CallExpression';
     functionName: string; // e.g., "eq", "and", "or", "like"
-    args: (StringLiteral | CallExpression)[]; // Arguments can be string literals or nested call expressions.
+    args: (StringLiteral | NumberLiteral | CallExpression)[]; // Arguments can be string literals, number literals, or nested call expressions.
 }
 
 /**
@@ -20,6 +20,14 @@ export interface CallExpression extends ASTNode {
 export interface StringLiteral extends ASTNode {
     kind: 'StringLiteral';
     value: string; // The actual string value, without quotes
+}
+
+/**
+ * NEW: Represents a number literal (e.g., 123, 3.14).
+ */
+export interface NumberLiteral extends ASTNode {
+    kind: 'NumberLiteral';
+    value: number; // The actual numeric value
 }
 
 /**

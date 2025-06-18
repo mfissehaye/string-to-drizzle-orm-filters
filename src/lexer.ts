@@ -1,6 +1,7 @@
 export enum TokenType {
     Identifier = 'IDENTIFIER', // e.g., "and", "or", "eq", "like"
     StringLiteral = 'STRING_LITERAL', // e.g., '"foo"', '"bar"'
+    NumberLiteral = 'NUMBER_LITERAL', // e.g., '123', '3.14'
     LParen = 'LPAREN', // '('
     RParen = 'RPAREN', // ')'
     Comma = 'COMMA', // ','
@@ -57,6 +58,8 @@ export class Lexer {
             default:
                 if (this.isLetter(char)) {
                     return this.readIdentifier();
+                } else if (this.isDigit(char)) { // Check for numbers
+                    return this.readNumberLiteral();
                 }
                 // Handle other unknown characters or numbers if needed later
                 return this.advanceAndCreateToken(TokenType.Unknown, char);
@@ -110,6 +113,23 @@ export class Lexer {
     }
 
     /**
+     * Reads a number literal (e.g., 123, 3.14).
+     */
+    private readNumberLiteral(): Token {
+        const startPos = this.currentPosition;
+        let value = '';
+        while (
+            this.currentPosition < this.input.length &&
+            (this.isDigit(this.input[this.currentPosition]!) ||
+            this.input[this.currentPosition] === '.')
+        ) {
+            value += this.input[this.currentPosition];
+            this.currentPosition++;
+        }
+        return this.createToken(TokenType.NumberLiteral, value, startPos);
+    }
+
+    /**
      * Skips over whitespace characters
      */
     private skipWhitespace(): void {
@@ -126,6 +146,13 @@ export class Lexer {
      */
     private isLetter(char: string): boolean {
         return (char >= 'a' && char <= 'z') || (char >= 'A' && char <= 'Z');
+    }
+
+    /**
+     * Checks if a character is a digit.
+     */
+    private isDigit(char: string): boolean {
+        return char >= '0' && char <= '9';
     }
 
     /**
