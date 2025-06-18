@@ -1,12 +1,12 @@
-import { DrizzleFilter } from "./ast";
-import { ColumnMap, FilterGenerator } from "./generator";
-import { Lexer } from "./lexer";
-import { Parser } from "./parser";
+import {DrizzleFilter} from "./ast";
+import {ColumnMap, FilterGenerator} from "./generator";
+import {Lexer} from "./lexer";
+import {Parser} from "./parser";
 
 export function convertStringToDrizzleFilter(
     expressionString: string,
     columnMap: ColumnMap
-): DrizzleFilter {
+): DrizzleFilter | string | number {
     const lexer = new Lexer(expressionString);
     const parser = new Parser(lexer)
     const ast = parser.parse()
@@ -16,4 +16,4 @@ export function convertStringToDrizzleFilter(
     return drizzleFilter;
 }
 
-export type { ColumnMap, DrizzleFilter }
+export type {ColumnMap, DrizzleFilter}

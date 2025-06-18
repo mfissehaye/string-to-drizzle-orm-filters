@@ -1,6 +1,6 @@
+import { Lexer } from "../src/lexer";
+import { Parser } from '../src/parser'
 import { describe, it, expect } from "vitest";
-import { Lexer, TokenType } from "../src/lexer";
-import { Parser, ParserError } from '../src/parser'
 import { CallExpression, StringLiteral } from "../src/ast";
 
 describe('Parser', () => {
